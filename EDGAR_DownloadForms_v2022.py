@@ -49,11 +49,12 @@ import MOD_Download_Utilities as du
 # -----------------------
 # List target forms as strings separated by commas (case sensitive) or
 #   load from EDGAR_Forms.  (See EDGAR_Forms module for predefined lists.)
-PARM_FORMS = {'10-Q'} #MOD_EDGAR_Forms.f_10X  # or, for example, PARM_FORMS = ['8-K', '8-K/A']
-PARM_BGNYEAR = 2020  # User selected bgn period.  Earliest available is 1993 
-PARM_ENDYEAR = 2020  # User selected end period.
+PARM_FORMS = {'10-K'} #MOD_EDGAR_Forms.f_10X  # or, for example, PARM_FORMS = ['8-K', '8-K/A']
+PARM_COMPANY = ['United Airlines Holdings, Inc.']
+PARM_BGNYEAR = 1993  # User selected bgn period.  Earliest available is 1993 
+PARM_ENDYEAR = 2024  # User selected end period.
 PARM_BGNQTR = 1  # Beginning quarter of each year
-PARM_ENDQTR = 1  # Ending quarter of each year
+PARM_ENDQTR = 4  # Ending quarter of each year
 # Path where you will store the downloaded files
 PARM_PATH = r'C:\Users\Nate\Documents\Code\School\TestFolder'
 # Change the file pointer below to reflect your location for the log file
@@ -113,8 +114,8 @@ def download_forms():
                     continue
                 
                 # Print lines after header
-                print("Lines after header:")
-                print("\n".join(lines[:20]))  # Print first 20 lines after header for inspection
+                # print("Lines after header:")
+                # print("\n".join(lines[:20]))  # Print first 20 lines after header for inspection
                 
                 # Find the start of the data section
                 # while lines and not lines[0].strip().startswith('CIK|'):
@@ -125,26 +126,31 @@ def download_forms():
                     lines.pop(0)
                 
                 # Print lines before processing
-                print("Lines to process:")
-                print("\n".join(lines[:20]))  # Print first 20 lines to process for inspection
+                # print("Lines to process:")
+                # print("\n".join(lines[:20]))  # Print first 20 lines to process for inspection
                 
-                print(f"Data lines count: {len(lines)}")
+                # print(f"Data lines count: {len(lines)}")
                 
                 # Process each line
                 for line in lines:
                     line = line.strip()
                     if not line:
                         continue  # Skip empty lines
-                    print(line)
-                    print(f"Processing line: '{line}'")
+                    # print(line)
+                    # print(f"Processing line: '{line}'")
                     item = MasterIndexRecord(line)
                     
                     if item.err:
                         print(f"Error with line: {line}")
                         f_log.write(f"Error with line: {line}\n")
                         continue
-                    
-                    if item.form in PARM_FORMS:
+
+                    # if item.name:
+                    #     print(f'Item Name: {item.name}')
+                    #     continue
+
+                    if  item.form in PARM_FORMS and item.name in PARM_COMPANY:
+                        print(item.name)
                         n_qtr += 1
                         fid = str(item.cik) + str(item.filingdate) + item.form
                         if fid in file_count:
@@ -152,7 +158,7 @@ def download_forms():
                         else:
                             file_count[fid] = 1
                         url = PARM_FORM_PREFIX + item.path
-                        print(url)
+                        # print(url)
                         fname = (path + str(item.filingdate) + '_' + item.form.replace('/', '-') + '_' +
                                  item.path.replace('/', '_'))
                         fname = fname.replace('.txt', '_' + str(file_count[fid]) + '.txt')
