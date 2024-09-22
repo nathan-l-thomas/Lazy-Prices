@@ -36,15 +36,15 @@ import re
 import string
 import sys
 import datetime as dt
-import MOD_Load_MasterDictionary_v2021 as LM
+import MOD_Load_MasterDictionary_v2023 as LM
 
 # User defined directory for files to be parsed
-TARGET_FILES = r'D:\EDGAR_Test\10-X_C\2021\QTR1\*.*'
+TARGET_FILES = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms\*.*'
 # User defined file pointer to LM dictionary
-MASTER_DICTIONARY_FILE = r'G:\My Drive\SRAF\LM_Master_Dictionary\\' + \
+MASTER_DICTIONARY_FILE = r'C:\Users\Nate\Documents\Code\School\Dictionary' + \
                          r'Loughran-McDonald_MasterDictionary_1993-2021.csv'
 # User defined output file
-OUTPUT_FILE = r'D:/Temp/Parser.csv'
+OUTPUT_FILE = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\ParserOuput\Parser.csv'
 # Setup output
 OUTPUT_FIELDS = ['file name', 'file size', 'number of words', '% negative', '% positive',
                  '% uncertainty', '% litigious', '% strong modal', '% weak modal',
