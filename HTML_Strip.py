@@ -1,36 +1,132 @@
-import html.parser
-import io
+# import html.parser
+import os
 import re
 
-path_in = r'C:\Users\Nate\Desktop\20240229_10-K_edgar_data_100517_0000100517-24-000027_1.txt'
-path_out = r'C:\Users\Nate\Desktop\cleaned_text.txt'
+
+#  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# - Remove ASCII-Encoded segments – All document segment <TYPE> tags of GRAPHIC, ZIP, EXCEL, JSON, and PDF are deleted from the file. ASCII-encoding is a means of converting binary-type files into standard ASCII characters to facilitate transfer across various hardware platforms. A relatively small graphic can create a substantial ASCII segment. Filings containing multiple graphics can be orders of magnitude larger than those containing only textual information.
+# - Remove <DIV>, <TR>, <TD>, and <FONT> tags – Although we require some HTML information for subsequent parsing, the files are so large (and processed as a single string) that, for processing efficiency, we initially simply strip out some of the formatting HTML.
+# - Remove all XML – all XML-embedded documents are removed.
+# - Remove all XBRL – all characters between <XBRL …> … </XBRL> are deleted.
+# - Remove SEC Header/Footer – All characters from the beginning of the original file thru </SEC-HEADER> (or </IMS-HEADER> in some older documents) are deleted from the file. Note however that the header information is retained and included in the tagged items discussed in section 4.1. In addition, the footer “-----END PRIVACY-ENHANCED MESSAGE-----” appearing at the end of each document is deleted.
+# - Replace \&NBSP and \&#160 with a blank space.
+# - Replace \&AMP and \&#38 with “&”
+# - Remove all remaining extended character references (ISO-8859-1, see http://www.sec.gov/info/edgar/edgarfm-vol2-v34.pdf section 5.2.2.6.
+# - Remove tables – all characters appearing between <TABLE> and </TABLE> tags are removed.
+# - Note that some filers use table tags to demark paragraphs of text, so each potential table string is first stripped of all HTML and then the number of numeric versus alphabetic characters is compared. For this parsing, only table-encapsulated strings where numeric chars/(alphabetic+numeric chars) > 10% are removed.
+# - In some instances, Item 7 and/or Item 8 of the filings begins with a table of data where the Item 7 or 8 demarcation appears as a line within the table string. Thus, any table string containing “Item 7” or “Item 8” (case insensitive) is not deleted.
+# - Tag Exhibits – At this point in the parsing process all exhibits are tagged as discussed in section 3.2.
+# - Remove Markup Tags – remove all remaining markup tags (i.e., <…>).
+# - Excess line feeds are removed.
+#  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 
-class HTMLTextExtractor(html.parser.HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.result = []
-
-    def handle_data(self, data):
-        self.result.append(data)
-
-    def get_text(self):
-        return ''.join(self.result)
+FOLDER_TO_PARSE = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms'
+CLEANED_OUTPUT_FOLDER = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms'
 
 
-def html_to_text(html):
-    """Converts HTML to plain text (stripping tags and converting entities)."""
-    extractor = HTMLTextExtractor()
-    extractor.feed(html)
-    return extractor.get_text()
+class FilingCleaner:
+    def __init__(self, content):
+        """Initialize with the file content."""
+        self.content = content
+
+    def remove_ascii_encoded_segments(self):
+        """Remove segments like <TYPE>GRAPHIC and content until 'end'."""
+        pattern = r'<TYPE>(GRAPHIC|ZIP|EXCEL|JSON|PDF).*?end'
+        self.content = re.sub(pattern, '', self.content,
+                              flags=re.DOTALL | re.IGNORECASE)
+
+    def remove_div_tr_td_font_tags(self):
+        """Remove <DIV>, <TR>, <TD>, and <FONT> tags."""
+        pattern = r'<(DIV|TR|TD|FONT)>'
+        self.content = re.sub(pattern, '', self.content,
+                              flags=re.IGNORECASE | re.DOTALL)
+
+    # def remove_xml_documents(self):
+    #     """Remove all XML-embedded documents."""
+    #     pattern = r'<[^>]+>.*?</[^>]+>'
+    #     self.content = re.sub(pattern, '', self.content, flags=re.DOTALL)
+
+    def replace_nbsp_and_amp_entities(self):
+        """Replace &NBSP and &#160 with a blank space, and &AMP and &#38 with “&”."""
+        self.content = re.sub(r'\&(NBSP|#160)', '', self.content)
+        self.content = re.sub(r'\&(AMP|#38)', '&', self.content)
+
+    def remove_specific_html_entities(self):
+        """Remove specific HTML character references."""
+        pattern = r'&#(135|136|137|138|139);'
+        self.content = re.sub(pattern, '', self.content)
+
+    def remove_tables_based_on_character_ratio(self):
+        """Remove tables based on character ratio logic, except those containing 'Item 7' or 'Item 8'."""
+        tables = re.findall(r'<TABLE.*?>(.*?)</TABLE>',
+                            self.content, flags=re.DOTALL | re.IGNORECASE)
+
+        for table in tables:
+            # Check if the table contains "Item 7" or "Item 8"
+            if re.search(r'Item 7|Item 8', table, flags=re.IGNORECASE):
+                continue  # Skip this table
+
+            numeric_count = sum(c.isdigit() for c in table)
+            alphabetic_count = sum(c.isalpha() for c in table)
+            total_count = numeric_count + alphabetic_count
+
+            if total_count > 0 and (numeric_count / total_count) > 0.10:
+                self.content = self.content.replace(table, '')
+
+        self.content = re.sub(r'<TABLE.*?>\s*</TABLE>', '',
+                              self.content, flags=re.DOTALL | re.IGNORECASE)
+
+    def remove_xbrl_content(self):
+        """Remove all XBRL – all characters between <XBRL ...> ... </XBRL> are deleted."""
+        self.content = re.sub(r'<XBRL.*?>.*?</XBRL>', '',
+                              self.content, flags=re.DOTALL | re.IGNORECASE)
+
+    def remove_html_comments(self):
+        """Remove HTML comments."""
+        self.content = re.sub(r'<!--.*?-->', '', self.content, flags=re.DOTALL)
+
+    def remove_remaining_html_tags(self):
+        """Remove any remaining HTML tags."""
+        self.content = re.sub(r'<[^>]+>', '', self.content)
+
+    def clean(self):
+        """Perform all cleaning steps in the order they are defined."""
+        self.remove_ascii_encoded_segments()
+        self.remove_div_tr_td_font_tags()
+        # self.remove_xml_documents()
+        self.replace_nbsp_and_amp_entities()
+        self.remove_specific_html_entities()
+        self.remove_tables_based_on_character_ratio()
+        self.remove_xbrl_content()
+        self.remove_html_comments()
+        self.remove_remaining_html_tags()
+        return self.content
 
 
-html_text =  open(path_in, 'r', encoding='utf-8').read()
+# Iterate through each file in the folder to parse
+for filename in os.listdir(FOLDER_TO_PARSE):
 
+    # Open file in read mode
+    file_path = os.path.join(FOLDER_TO_PARSE, filename)
+    with open(file_path, 'r', encoding='utf-8') as f:
+        print(f'Currently parsing and cleaning <{filename}>...')
+        file_content = f.read()
+        filename_trimmed = filename.replace('.txt', '')
+        # print(file_content)
 
+        # Clean the content using FilingCleaner
+        cleaner = FilingCleaner(file_content)
+        cleaned_content = cleaner.clean()  # Clean the file content
 
-plain_text = html_to_text(cleaned_html)
-print(repr(plain_text))
+        # Ensure cleaned_content is not None
+        if cleaned_content is None:
+            cleaned_content = ""  # Default to empty string if nothing is returned
 
-with open(path_out, 'w', encoding='utf-8') as output_file:
-    output_file.write(plain_text)
+        # Define the output file path
+        output_filename = f'{filename_trimmed}_cleaned.txt'
+        output_path = os.path.join(CLEANED_OUTPUT_FOLDER, output_filename)
+
+        # Write cleaned form to OUTPUT_PATH
+        with open(output_path, 'w', encoding='utf-8') as output_file:
+            output_file.write(cleaned_content)
