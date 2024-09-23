@@ -6,7 +6,7 @@
 - Added additional scripts from the University of Norte Dame
 - Added an HTML parsing script to do the following:
 - Remove unnecessary ASCII-encoded segments
-- Strip out specific HTML tags like <DIV>, <TR>, <TD>, and <FONT>
+- Strip out specific HTML tags like '<DIV>, <TR>, <TD>, and <FONT>'
 - Delete all XML and XBRL content
 - Replace non-breaking spaces and ampersand references.
 - Remove tables based on character content
