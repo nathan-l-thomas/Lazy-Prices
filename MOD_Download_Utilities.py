@@ -16,9 +16,10 @@ from urllib.request import urlopen
 
 
 HEADER = {'Host': 'www.sec.gov', 'Connection': 'close',
-         'Accept': 'application/json, text/javascript, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest',
-         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
-         }
+          'Accept': 'application/json, text/javascript, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
+          }
+
 
 def download_to_file(url, fname, f_log=None, number_of_tries=5, sleep_time=10):
     # download file from '_url' and write to 'fname'
@@ -32,11 +33,13 @@ def download_to_file(url, fname, f_log=None, number_of_tries=5, sleep_time=10):
                     f.write(response.content)
                 return True
             else:
-                print(f'  Error in try #{i} download_to_file: URL = {url} | status_code = {response.status_code}')
+                print(f'  Error in try #{i} download_to_file: URL = {
+                      url} | status_code = {response.status_code}')
                 if i == number_of_tries + 1:
                     print(f'  Failed download: URL = {url}')
-                    if f_log: f_log.write(f'  Failed download: URL = {url}\n')
-                
+                    if f_log:
+                        f_log.write(f'  Failed download: URL = {url}\n')
+
         except Exception as exc:
             if i == 1:
                 print('\n==>urlretrieve error in download_to_file.py')
@@ -70,10 +73,12 @@ def download_to_doc(url, f_log=None, number_of_tries=5, sleep_time=10):
                 doc = response.content.decode('utf-8', errors='ignore')
                 return doc
             else:
-                print(f'  Error in try #{i} download_to_file: URL = {url} | status_code = {response.status_code}')
+                print(f'  Error in try #{i} download_to_file: URL = {
+                      url} | status_code = {response.status_code}')
                 if i == number_of_tries + 1:
                     print(f'  Failed download: URL = {url}')
-                    if f_log: f_log.write(f'  Failed download: URL = {url}\n')
+                    if f_log:
+                        f_log.write(f'  Failed download: URL = {url}\n')
         except Exception as exc:
             if i == 1:
                 print('\n==>urlopen error in download_to_doc.py')
@@ -87,24 +92,24 @@ def download_to_doc(url, f_log=None, number_of_tries=5, sleep_time=10):
 
     print(f'  ERROR:  Download failed for url: {url}')
     if f_log:
-        f_log.write(f'\nERROR:  Download failed=>  _url: {url} |  {dt.datetime.now().strftime("%c")}')
+        f_log.write(f'\nERROR:  Download failed=>  _url: {
+                    url} |  {dt.datetime.now().strftime("%c")}')
 
     return None
 
 
 # Test routine
 if __name__ == '__main__':
-    
+
     start = dt.datetime.now()
     print(f"\n\n{start.strftime('%c')}\nPROGRAM NAME: {sys.argv[0]}\n")
 
     testfail_url = 'http://www.nd.edu/~mcdonald/xyz.html'  # set to throw an error
-    test_url = 'http://www.sec.gov/Archives/edgar/data/1046568/0001193125-15-075170.txt'    
+    test_url = 'http://www.sec.gov/Archives/edgar/data/1046568/0001193125-15-075170.txt'
     fname = 'D:/Temp/DL_test.txt'
     f_log = open('D:/Temp/DL_log.txt', 'w')
     download_to_file(test_url, fname, f_log)
     doc = download_to_doc(test_url, f_log)
 
     print(f"\n\nRuntime: {(dt.datetime.now()-start)}")
-    print(f"\nNormal termination.\n{dt.datetime.now().strftime('%c')}\n")   
-    
+    print(f"\nNormal termination.\n{dt.datetime.now().strftime('%c')}\n")

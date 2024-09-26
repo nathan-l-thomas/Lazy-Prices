@@ -50,14 +50,14 @@ import MOD_Download_Utilities as du
 # List target forms as strings separated by commas (case sensitive) or
 #   load from EDGAR_Forms.  (See EDGAR_Forms module for predefined lists.)
 # MOD_EDGAR_Forms.f_10X  # or, for example, PARM_FORMS = ['8-K', '8-K/A']
-PARM_FORMS = {'10-K'}
-PARM_COMPANY = ['United Airlines Holdings, Inc.']
+PARM_FORMS = {'10-Q'}
+PARM_CIK = [1000045]
 PARM_BGNYEAR = 2023  # User selected bgn period.  Earliest available is 1993
-PARM_ENDYEAR = 2024  # User selected end period.
+PARM_ENDYEAR = 2025  # User selected end period.
 PARM_BGNQTR = 1  # Beginning quarter of each year
-PARM_ENDQTR = 1  # Ending quarter of each year
+PARM_ENDQTR = 4  # Ending quarter of each year
 # Path where you will store the downloaded files
-PARM_PATH = r'C:\Users\Nate\Documents\Code\School\TestFolder'
+PARM_PATH = r'C:\Users\Nate\Documents\Code\School\Lazy Prices\RawDocuments\YEAR'
 # Change the file pointer below to reflect your location for the log file
 #    (directory must already exist)
 PARM_LOGFILE = (r'C:\Users\Nate\Documents\Code\School\TestFolder\EDGAR_Download_FORM-X_LogFile_' +
@@ -152,8 +152,8 @@ def download_forms():
                     #     print(f'Item Name: {item.name}')
                     #     continue
 
-                    if item.form in PARM_FORMS and item.name in PARM_COMPANY:
-                        print(item.name)
+                    if item.form in PARM_FORMS and item.cik in PARM_CIK:
+                        print(item.name, item.cik)
                         n_qtr += 1
                         fid = str(item.cik) + str(item.filingdate) + item.form
                         if fid in file_count:
@@ -180,7 +180,7 @@ def download_forms():
                         n_tot += 1
                         if n_tot % 100 == 0:
                             print(f'  Total files: {n_tot:,}', end="\r")
-                        time.sleep(1)  # Space out requests
+                        time.sleep(1)
 
             print(f'{year} : {qtr} -> {n_qtr:,} downloads completed.  Time = ' +
                   f'{(dt.datetime.now() - startloop)}' +

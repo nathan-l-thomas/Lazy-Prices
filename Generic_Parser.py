@@ -39,42 +39,48 @@ import datetime as dt
 import MOD_Load_MasterDictionary_v2023 as LM
 
 # User defined directory for files to be parsed
-TARGET_FILES = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms\*.*'
+TARGET_FILES = r'C:\Users\Nate\Documents\Code\School\Lazy Prices\CleanedDocuments\*.txt'
 # User defined file pointer to LM dictionary
-MASTER_DICTIONARY_FILE = r'C:\Users\Nate\Documents\Code\School\Dictionary' + \
-                         r'Loughran-McDonald_MasterDictionary_1993-2021.csv'
+MASTER_DICTIONARY_FILE = r"C:\Users\Nate\Documents\Code\School\Lazy Prices\PythonCode\Loughran-McDonald_MasterDictionary_1993-2023.csv"
 # User defined output file
-OUTPUT_FILE = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\ParserOuput\Parser.csv'
+OUTPUT_FILE = r'C:\Users\Nate\Documents\Code\School\Lazy Prices\ParserOutput\Parser.csv'
 # Setup output
 OUTPUT_FIELDS = ['file name', 'file size', 'number of words', '% negative', '% positive',
                  '% uncertainty', '% litigious', '% strong modal', '% weak modal',
                  '% constraining', '# of alphabetic', '# of digits',
                  '# of numbers', 'avg # of syllables per word', 'average word length', 'vocabulary']
 
-lm_dictionary = LM.load_masterdictionary(MASTER_DICTIONARY_FILE, print_flag=True)
+lm_dictionary = LM.load_masterdictionary(
+    MASTER_DICTIONARY_FILE, print_flag=True)
 
 
 def main():
 
-    f_out = open(OUTPUT_FILE, 'w')
-    wr = csv.writer(f_out, lineterminator='\n')
-    wr.writerow(OUTPUT_FIELDS)
+    with open(OUTPUT_FILE, 'w', newline='', encoding='UTF-8') as f_out:
+        wr = csv.writer(f_out)
+        wr.writerow(OUTPUT_FIELDS)
 
-    file_list = glob.glob(TARGET_FILES)
-    n_files = 0
-    for file in file_list:
-        n_files += 1
-        print(f'{n_files:,} : {file}')
-        with open(file, 'r', encoding='UTF-8', errors='ignore') as f_in:
-            doc = f_in.read()
-        doc = re.sub('(May|MAY)', ' ', doc)  # drop all May month references
-        doc = doc.upper()  # for this parse caps aren't informative so shift
+        file_list = glob.glob(TARGET_FILES)
+        n_files = 0
 
-        output_data = get_data(doc)
-        output_data[0] = file
-        output_data[1] = len(doc)
-        wr.writerow(output_data)
-        if n_files == 3: break
+        for file in file_list:
+            print(file)
+            n_files += 1
+            print(f'{n_files:,} : {file}')
+
+            with open(file, 'r', encoding='UTF-8', errors='ignore') as f_in:
+                doc = f_in.read()
+
+            doc = re.sub('(May|MAY)', ' ', doc)
+            doc = doc.upper()  # Convert to uppercase
+
+            output_data = get_data(doc)
+            output_data[0] = file
+            output_data[1] = len(doc)
+            wr.writerow(output_data)
+
+            if n_files == 3:
+                break
 
 
 def get_data(doc):
@@ -83,38 +89,49 @@ def get_data(doc):
     _odata = [0] * 16
     total_syllables = 0
     word_length = 0
-    
-    tokens = re.findall('\w+', doc)  # Note that \w+ splits hyphenated words
+
+    tokens = re.findall(r'\w+', doc)
     for token in tokens:
         if not token.isdigit() and len(token) > 1 and token in lm_dictionary:
             _odata[2] += 1  # word count
             word_length += len(token)
+
             if token not in vdictionary:
                 vdictionary[token] = 1
-            if lm_dictionary[token].negative: _odata[3] += 1
-            if lm_dictionary[token].positive: _odata[4] += 1
-            if lm_dictionary[token].uncertainty: _odata[5] += 1
-            if lm_dictionary[token].litigious: _odata[6] += 1
-            if lm_dictionary[token].strong_modal: _odata[7] += 1
-            if lm_dictionary[token].weak_modal: _odata[8] += 1
-            if lm_dictionary[token].constraining: _odata[9] += 1
+
+            if lm_dictionary[token].negative:
+                _odata[3] += 1
+            if lm_dictionary[token].positive:
+                _odata[4] += 1
+            if lm_dictionary[token].uncertainty:
+                _odata[5] += 1
+            if lm_dictionary[token].litigious:
+                _odata[6] += 1
+            if lm_dictionary[token].strong_modal:
+                _odata[7] += 1
+            if lm_dictionary[token].weak_modal:
+                _odata[8] += 1
+            if lm_dictionary[token].constraining:
+                _odata[9] += 1
+
             total_syllables += lm_dictionary[token].syllables
 
     _odata[10] = len(re.findall('[A-Z]', doc))
     _odata[11] = len(re.findall('[0-9]', doc))
     # drop punctuation within numbers for number count
-    doc = re.sub('(?!=[0-9])(\.|,)(?=[0-9])', '', doc)
-    doc = doc.translate(str.maketrans(string.punctuation, " " * len(string.punctuation)))
+    doc = re.sub(r'(?!=[0-9])(\.|,)(?=[0-9])', '', doc)
+    doc = doc.translate(str.maketrans(
+        string.punctuation, " " * len(string.punctuation)))
     _odata[12] = len(re.findall(r'\b[-+\(]?[$€£]?[-+(]?\d+\)?\b', doc))
     _odata[13] = total_syllables / _odata[2]
     _odata[14] = word_length / _odata[2]
     _odata[15] = len(vdictionary)
-    
+
     # Convert counts to %
     for i in range(3, 9 + 1):
         _odata[i] = (_odata[i] / _odata[2]) * 100
     # Vocabulary
-        
+
     return _odata
 
 

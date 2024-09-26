@@ -21,8 +21,8 @@ import re
 #  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 
-FOLDER_TO_PARSE = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms'
-CLEANED_OUTPUT_FOLDER = r'C:\Users\Nate\Documents\Code\School\Lazy-Prices\Forms'
+FOLDER_TO_PARSE = r'C:\Users\Nate\Documents\Code\School\Lazy Prices\RawDocuments'
+CLEANED_OUTPUT_FOLDER = r'C:\Users\Nate\Documents\Code\School\Lazy Prices\CleanedDocuments'
 
 
 class FilingCleaner:
@@ -104,29 +104,29 @@ class FilingCleaner:
         return self.content
 
 
-# Iterate through each file in the folder to parse
-for filename in os.listdir(FOLDER_TO_PARSE):
+for root, dirs, files in os.walk(FOLDER_TO_PARSE):
+    for file in files:
+        if file.endswith('.txt'):
+            file_path = os.path.join(root, file)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                print(f'Currently parsing and cleaning <{file}>...')
+                file_content = f.read()
+                # Use 'file' instead of 'filename'
+                filename_trimmed = file.replace('.txt', '')
 
-    # Open file in read mode
-    file_path = os.path.join(FOLDER_TO_PARSE, filename)
-    with open(file_path, 'r', encoding='utf-8') as f:
-        print(f'Currently parsing and cleaning <{filename}>...')
-        file_content = f.read()
-        filename_trimmed = filename.replace('.txt', '')
-        # print(file_content)
+                # Clean the content using FilingCleaner
+                cleaner = FilingCleaner(file_content)
+                cleaned_content = cleaner.clean()  # Clean the file content
 
-        # Clean the content using FilingCleaner
-        cleaner = FilingCleaner(file_content)
-        cleaned_content = cleaner.clean()  # Clean the file content
+                # Ensure cleaned_content is not None
+                if cleaned_content is None:
+                    cleaned_content = ""  # Default to empty string if nothing is returned
 
-        # Ensure cleaned_content is not None
-        if cleaned_content is None:
-            cleaned_content = ""  # Default to empty string if nothing is returned
+                # Define the output file path
+                output_filename = f'{filename_trimmed}_cleaned.txt'
+                output_path = os.path.join(
+                    CLEANED_OUTPUT_FOLDER, output_filename)
 
-        # Define the output file path
-        output_filename = f'{filename_trimmed}_cleaned.txt'
-        output_path = os.path.join(CLEANED_OUTPUT_FOLDER, output_filename)
-
-        # Write cleaned form to OUTPUT_PATH
-        with open(output_path, 'w', encoding='utf-8') as output_file:
-            output_file.write(cleaned_content)
+                # Write cleaned form to OUTPUT_PATH
+                with open(output_path, 'w', encoding='utf-8') as output_file:
+                    output_file.write(cleaned_content)

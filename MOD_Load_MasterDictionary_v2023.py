@@ -14,13 +14,13 @@ def load_masterdictionary(file_path, print_flag=False, f_log=None, get_other=Fal
     start_local = dt.datetime.now()
     # Setup dictionaries
     _master_dictionary = {}
-    _sentiment_categories = ['negative', 'positive', 'uncertainty', 'litigious', 
+    _sentiment_categories = ['negative', 'positive', 'uncertainty', 'litigious',
                              'strong_modal', 'weak_modal', 'constraining', 'complexity']
     _sentiment_dictionaries = dict()
     for sentiment in _sentiment_categories:
         _sentiment_dictionaries[sentiment] = dict()
-   
-    # Load slightly modified common stopwords. 
+
+    # Load slightly modified common stopwords.
     # Dropped from traditional: A, I, S, T, DON, WILL, AGAINST
     # Added: AMONG
     _stopwords = ['ME', 'MY', 'MYSELF', 'WE', 'OUR', 'OURS', 'OURSELVES', 'YOU', 'YOUR', 'YOURS',
@@ -50,7 +50,8 @@ def load_masterdictionary(file_path, print_flag=False, f_log=None, get_other=Fal
                     _sentiment_dictionaries[sentiment][word] = 0
             _total_documents += _master_dictionary[cols[0]].doc_count
             if len(_master_dictionary) % 5000 == 0 and print_flag:
-                print(f'\r ...Loading Master Dictionary {len(_master_dictionary):,}', end='', flush=True)
+                print(f'\r ...Loading Master Dictionary {
+                      len(_master_dictionary):,}', end='', flush=True)
 
     if print_flag:
         print('\r', end='')  # clear line
@@ -65,11 +66,14 @@ def load_masterdictionary(file_path, print_flag=False, f_log=None, get_other=Fal
             f_log.write(f'\n    print_flag = {print_flag}')
             f_log.write(f'\n    f_log      = {f_log.name}')
             f_log.write(f'\n    get_other  = {get_other}')
-            f_log.write(f'\n\n    {len(_master_dictionary):,} words loaded in master_dictionary.\n')
+            f_log.write(f'\n\n    {len(_master_dictionary)
+                        :,} words loaded in master_dictionary.\n')
             f_log.write(f'\n    Sentiment:')
             for sentiment in _sentiment_categories:
-                f_log.write(f'\n      {sentiment:13}: {len(_sentiment_dictionaries[sentiment]):8,}')
-            f_log.write(f'\n\n  END FUNCTION: load_masterdictionary: {(dt.datetime.now()-start_local)}')
+                f_log.write(f'\n      {sentiment:13}: {
+                            len(_sentiment_dictionaries[sentiment]):8,}')
+            f_log.write(f'\n\n  END FUNCTION: load_masterdictionary: {
+                        (dt.datetime.now()-start_local)}')
         except Exception as e:
             print('Log file in load_masterdictionary is not available for writing')
             print(f'Error = {e}')
@@ -87,7 +91,7 @@ class MasterDictionary:
                 cols[ptr] = '0'
         try:
             self.word = cols[0].upper()
-            self.sequence_number = int(cols[1])    
+            self.sequence_number = int(cols[1])
             self.word_count = int(cols[2])
             self.word_proportion = float(cols[3])
             self.average_proportion = float(cols[4])
@@ -114,11 +118,10 @@ class MasterDictionary:
         return
 
 
-
 if __name__ == '__main__':
     start = dt.datetime.now()
     print(f'\n\n{start.strftime("%c")}\nPROGRAM NAME: {sys.argv[0]}\n')
-    f_log = open('D:\Temp\Load_MD_Logfile.txt', 'w')
+    f_log = open(r'C:\Users\Nate\Documents\Code\School\Lazy Prices\Logs', 'w')
     md = (r'\\...LoughranMcDonald_MasterDictionary_2021.csv')
     master_dictionary, md_header, sentiment_categories, sentiment_dictionaries, stopwords, total_documents = \
         load_masterdictionary(md, True, f_log, True)
