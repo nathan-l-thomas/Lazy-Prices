@@ -42,10 +42,17 @@ class FilingCleaner:
         self.content = re.sub(pattern, '', self.content,
                               flags=re.IGNORECASE | re.DOTALL)
 
-    # def remove_xml_documents(self):
-    #     """Remove all XML-embedded documents."""
-    #     pattern = r'<[^>]+>.*?</[^>]+>'
-    #     self.content = re.sub(pattern, '', self.content, flags=re.DOTALL)
+    def remove_xml_documents(self):
+        """Remove all XML-embedded documents."""
+        pattern = r'<[^>]+>.*?</[^>]+>'
+        self.content = re.sub(pattern, '', self.content, flags=re.DOTALL)
+
+    def remove_sec_header_footer(self):
+        """Remove SEC Header/Footer from the document."""
+        self.content = re.sub(
+            r'^.*?</SEC-HEADER>|^.*?</IMS-HEADER>', '', self.content, flags=re.DOTALL)
+        self.content = re.sub(
+            r'-----END PRIVACY-ENHANCED MESSAGE-----$', '', self.content, flags=re.DOTALL)
 
     def replace_nbsp_and_amp_entities(self):
         """Replace &NBSP and &#160 with a blank space, and &AMP and &#38 with “&”."""
@@ -90,17 +97,20 @@ class FilingCleaner:
         """Remove any remaining HTML tags."""
         self.content = re.sub(r'<[^>]+>', '', self.content)
 
+    def remove_empty_lines(self):
+        self.content = re.sub(r'^\s*\n', '', self.content, flags=re.MULTILINE)
+
     def clean(self):
-        """Perform all cleaning steps in the order they are defined."""
         self.remove_ascii_encoded_segments()
         self.remove_div_tr_td_font_tags()
-        # self.remove_xml_documents()
+        self.remove_sec_header_footer
         self.replace_nbsp_and_amp_entities()
         self.remove_specific_html_entities()
         self.remove_tables_based_on_character_ratio()
         self.remove_xbrl_content()
         self.remove_html_comments()
         self.remove_remaining_html_tags()
+        self.remove_empty_lines()
         return self.content
 
 
@@ -111,14 +121,12 @@ for root, dirs, files in os.walk(FOLDER_TO_PARSE):
             with open(file_path, 'r', encoding='utf-8') as f:
                 print(f'Currently parsing and cleaning <{file}>...')
                 file_content = f.read()
-                # Use 'file' instead of 'filename'
                 filename_trimmed = file.replace('.txt', '')
 
                 # Clean the content using FilingCleaner
                 cleaner = FilingCleaner(file_content)
                 cleaned_content = cleaner.clean()  # Clean the file content
 
-                # Ensure cleaned_content is not None
                 if cleaned_content is None:
                     cleaned_content = ""  # Default to empty string if nothing is returned
 
